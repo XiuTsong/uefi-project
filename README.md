@@ -39,7 +39,7 @@ git clone https://github.com/XiuTsong/uefi-project.git
 Update edk2 submodule. 
 
 ```
-git submodule update --recursive
+git submodule update --recursive --init
 ```
 
 Configure edk2(You can refer to the previous slides given by TA).
@@ -48,13 +48,21 @@ Configure edk2(You can refer to the previous slides given by TA).
 cd edk2
 make -C BaseTools
 source edksetup.sh BaseTools
+cd ..
 
-#you will find there are file edk2/Conf/target.txt
-#edit this file, set the following setting.
+# you will find there are file edk2/Conf/target.txt
+# edit this file, set the following setting.
 #
-#ACTIVE_PLATFORM  = OvmfPkg/OvmfPkgX64.dsc
-#TARGET_ARCH      = X64
-#TOOL_CHAIN_TAG   = GCC5
+# ACTIVE_PLATFORM  = OvmfPkg/OvmfPkgX64.dsc
+# TARGET_ARCH      = X64
+# TOOL_CHAIN_TAG   = GCC5
+```
+
+Configure linux
+
+```
+cd linux
+cp myconfig .config
 ```
 
 Enter the directory `run-ovmf`, use the following command to compile edk2 and linux kernel.
