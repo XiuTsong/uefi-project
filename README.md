@@ -1,7 +1,7 @@
-# uefi-project1
-	UEFI project for SJTU software engineering graduate course.
-
+# uefi-project
 ## Prerequesites
+
+​	(If you have done labs in class before, this section can be skipped.)
 
 1. Update the package managers database.
 
@@ -33,13 +33,51 @@ Copyright (c) 2003-2022 Fabrice Bellard and the QEMU Project developers
 Clone this repository.
 
 ```bash
-git clone https://github.com/XiuTsong/uefi-project1.git
+git clone https://github.com/XiuTsong/uefi-project.git
+```
+
+Update edk2 submodule. 
+
+```
+git submodule update --recursive
+```
+
+Configure edk2(You can refer to the previous slides given by TA).
+
+```
+cd edk2
+make -C BaseTools
+source edksetup.sh BaseTools
+
+#you will find there are file edk2/Conf/target.txt
+#edit this file, set the following setting.
+#
+#ACTIVE_PLATFORM  = OvmfPkg/OvmfPkgX64.dsc
+#TARGET_ARCH      = X64
+#TOOL_CHAIN_TAG   = GCC5
 ```
 
 Enter the directory `run-ovmf`, use the following command to compile edk2 and linux kernel.
 
 ```
 make all
+```
+
+Besides, you can compile edk2 and linux separately.
+
+```
+# Compile edk2
+make edk2
+# Compile linux
+make linux
+```
+
+If you have problem compiling edk2, it is likely that edk2 is not fully cloned. You can first delete the edk2 folder with `rm - rf`, and then clone it with the following command:
+
+```
+git clone --recursive git@github.com:XiuTsong/uefi-edk2.git edk2
+cd edk2
+git pull
 ```
 
 
