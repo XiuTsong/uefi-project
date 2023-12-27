@@ -4,7 +4,7 @@ ROOT:=$(shell dirname $(cur_dir))
 ################################################################################
 # Targets
 ################################################################################
-TARGET_DEPS := linux edk2 initramfs
+TARGET_DEPS := linux edk2
 TARGET_CLEAN := linux-clean edk2-clean
 
 all: $(TARGET_DEPS)
