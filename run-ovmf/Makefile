@@ -4,7 +4,7 @@ ROOT:=$(shell dirname $(cur_dir))
 ################################################################################
 # Targets
 ################################################################################
-TARGET_DEPS := linux edk2
+TARGET_DEPS := linux edk2 initramfs
 TARGET_CLEAN := linux-clean edk2-clean
 
 all: $(TARGET_DEPS)
@@ -18,6 +18,7 @@ EDK2_BUILD      ?= $(EDK2_PATH)/Build/OvmfX64/DEBUG_GCC5
 EDK2_BIN		?= $(EDK2_BUILD)/FV/OVMF.fd
 LINUX_PATH      ?= $(ROOT)/linux
 LINUX_IMAGE     ?= $(LINUX_PATH)/arch/x86_64/boot/bzImage
+BUSYBOX_PATH    ?= $(ROOT)/busybox
 
 linux:
 	make -C $(LINUX_PATH) -j16 
@@ -35,6 +36,11 @@ edk2-clean:
 	cd $(EDK2_PATH) && \
 	. $(EDK2_PATH)/edksetup.sh BaseTools && \
 	build clean
+
+initramfs:
+	cd $(BUSYBOX_PATH) && \
+	find _install -print0 | cpio --null -ov --format=newc | gzip -9 > $(CURDIR)/initramfs-busybox-x64.cpio.gz
+
 
 ################################################################################
 # Qemu run

@@ -65,19 +65,31 @@ cd linux
 cp myconfig .config
 ```
 
+Configure busybos
+
+```
+cd busybox/_install
+sudo mkdir dev 
+sudo mknod dev/console c 5 1
+sudo mknod dev/ram b 1 0
+# You could also add your .bin file to _install
+```
+
 Enter the directory `run-ovmf`, use the following command to compile edk2 and linux kernel.
 
 ```
 make all
 ```
 
-Besides, you can compile edk2 and linux separately.
+Besides, you can compile edk2, linux and initramfss separately.
 
 ```
 # Compile edk2
 make edk2
 # Compile linux
 make linux
+# Compile busybox
+make initramfs
 ```
 
 If you have problem compiling edk2, it is likely that edk2 is not fully cloned. You can first delete the edk2 folder with `rm - rf`, and then clone it with the following command:
