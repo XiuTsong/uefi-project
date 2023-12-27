@@ -18,7 +18,7 @@ EDK2_BUILD      ?= $(EDK2_PATH)/Build/OvmfX64/DEBUG_GCC5
 EDK2_BIN		?= $(EDK2_BUILD)/FV/OVMF.fd
 LINUX_PATH      ?= $(ROOT)/linux
 LINUX_IMAGE     ?= $(LINUX_PATH)/arch/x86_64/boot/bzImage
-BUSYBOX_PATH    ?= $(ROOT)/busybox
+BUSYBOX_PATH    ?= $(ROOT)/busybox/_install
 
 linux:
 	make -C $(LINUX_PATH) -j16 
@@ -39,7 +39,7 @@ edk2-clean:
 
 initramfs:
 	cd $(BUSYBOX_PATH) && \
-	find _install -print0 | cpio --null -ov --format=newc | gzip -9 > $(CURDIR)/initramfs-busybox-x64.cpio.gz
+	find . -print0 | cpio --null -ov --format=newc | gzip -9 > $(CURDIR)/initramfs-busybox-x64.cpio.gz
 
 
 ################################################################################
@@ -50,8 +50,7 @@ clean-debug:
 	-rm $(EDK2_BUILD)/X64/*.debug
 
 run-only: clean-debug
-	qemu-system-x86_64 -net none \
-	  -kernel $(LINUX_IMAGE) \
+	qemu-system-x86_64 -kernel $(LINUX_IMAGE) \
 	  -initrd $(cur_dir)/initramfs-busybox-x64.cpio.gz \
 	  --bios $(EDK2_BIN) \
 	  --debugcon file:"ovmf-boot.log" \
@@ -63,8 +62,7 @@ run-only: clean-debug
 	  -drive file=fat:rw:$(EDK2_BUILD)/X64,id=fat32,format=raw \
 
 run: clean-debug
-	qemu-system-x86_64 -net none \
-	  -s -S \
+	qemu-system-x86_64  -s -S \
 	  -kernel $(LINUX_IMAGE) \
 	  -initrd $(cur_dir)/initramfs-busybox-x64.cpio.gz \
 	  --bios $(EDK2_BIN) \
