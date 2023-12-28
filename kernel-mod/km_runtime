@@ -1,0 +1,80 @@
+#include <>
+#include <linux/efi.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/proc_fs.h>
+#include <linux/uaccess.h>
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("lz");
+
+extern struct efi efi;
+
+static long ioctl_runtime(struct file *filp, unsigned int cmd,
+                          unsigned long arg) {
+  int nums[2];
+  int ret;
+  pr_info("Hello new system call!\n");
+  efi_status_t status;
+  pr_info("test_efi begin.\n");
+  efi_time_t system_time;
+  efi_time_cap_t time_cap;
+
+  status = efi.get_time(&system_time, &time_cap);
+
+  if (status != EFI_SUCCESS) {
+    pr_info("efi get time failed\n");
+    return status;
+  }
+
+  pr_info("Current system time: %d/%d/%d %d:%d:%d\n", system_time.year,
+          system_time.month, system_time.day, system_time.hour,
+          system_time.minute, system_time.second);
+
+  if (status != EFI_SUCCESS) {
+    pr_info("test_get_time failed\n");
+  }
+  unsigned int key = 0;
+  status = efi.sample_runtime_service(&key);
+  pr_info("sample_runtime_service key: %u\n", key);
+  if (status != EFI_SUCCESS) {
+    pr_info("test_sample_time_service failed, status %lx\n", status);
+    pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
+            (1UL << (BITS_PER_LONG - 1)));
+  }
+  return 0;
+}
+
+static struct file_operations ioctl_ops = {
+    .unlocked_ioctl = ioctl_runtime,
+};
+
+static struct miscdevice ioctl_dev = {
+    MISC_DYNAMIC_MINOR,
+    "ioctl_runtime",
+    &ioctl_ops,
+};
+
+static int ioctl_mod_init(void) {
+  int ret;
+
+  ret = misc_register(&ioctl_dev);
+  if (ret) {
+    pr_err("ioctl_runtime: misc device register failed\n");
+    return -1;
+  }
+
+  printk(KERN_ALERT "ioctl module init!\n");
+
+  return 0;
+}
+
+static void ioctl_mod_exit(void) {
+  misc_deregister(&ioctl_dev);
+  printk(KERN_ALERT "ioctl module exit!\n");
+}
+
+module_init(ioctl_mod_init);
+module_exit(ioctl_mod_exit);
