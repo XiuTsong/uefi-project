@@ -339,6 +339,7 @@
 330	common	pkey_alloc		sys_pkey_alloc
 331	common	pkey_free		sys_pkey_free
 332 common  edk_runtime     sys_edk_runtime
+333 common  edk_runtime_sample     sys_edk_runtime_sample
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact
