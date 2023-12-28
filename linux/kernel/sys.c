@@ -934,6 +934,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     }
   }
 
+  // add service here
   if (!strncmp(comm, "time_key", 10)) {
     efi_status_t status;
     pr_info("test_efi begin.\n");
