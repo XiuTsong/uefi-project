@@ -2,8 +2,6 @@
 #include "EasyDefs.h"
 #include <string.h>
 
-#define SetMem memset
-
 EASY_BLOCK_SYSTEM gBlockSystem;
 
 EASY_STATUS
@@ -20,7 +18,7 @@ InitBlocks(
         gBlockSystem.Bitmap[i] = 0;
     }
 
-    // SetMem(MemoryPool, Nbyte, 0);
+    // FIXME: SetMem(MemoryPool, Nbyte, 0);
     memset(MemoryPool, 0, Nbyte);
 
     return EASY_SUCCESS;

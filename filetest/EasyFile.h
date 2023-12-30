@@ -28,6 +28,11 @@ typedef struct {
 } EASY_FILE_DIR;
 
 EASY_STATUS
+InitEasyFile(
+    VOID
+    );
+
+EASY_STATUS
 EasyCreateFile(
     VOID *FileName
     );

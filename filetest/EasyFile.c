@@ -23,8 +23,7 @@ GetFileNameLen(
     ch = FileName;
     for (i = 0; *ch != 0; ++i, ++ch);
 
-    printf("filelen %d\n", i);
-
+    // printf("filelen %d\n", i);
     return i;
 }
 
@@ -100,13 +99,17 @@ EasyDirAddFile(
     UINTN i;
 
     for (i = 0; i < MAX_FILE_NUM; ++i) {
-        if (Dir->FileIds[i] != 0) {
+        if (Dir->FileIds[i] == 0) {
             Dir->FileIds[i] = FileId;
             return EASY_SUCCESS;
         }
     }
     return -EASY_DIR_TOO_MANY_FILE_ERROR;
 }
+
+/************************************************************
+ *        File Layer
+ ************************************************************/
 
 STATIC
 UINTN
@@ -116,8 +119,10 @@ GetFile(
 {
     UINTN i;
 
-    for (i = 0; i < MAX_FILE_NUM; ++i) {
+    /** We remain the first file in gFilePool unused */
+    for (i = 1; i < MAX_FILE_NUM; ++i) {
         if (!gFilePoolAllocated[i]) {
+            gFilePoolAllocated[i] = 1;
             return i;
         }
     }
@@ -125,9 +130,23 @@ GetFile(
     return -EASY_FILE_NO_MORE_FILE_ERROR;
 }
 
-/************************************************************
- *        File Layer
- ************************************************************/
+EASY_STATUS
+InitEasyFile(
+    VOID
+    )
+{
+    UINTN i;
+
+    // FIXME: SetMem()
+    memset(gFilePoolAllocated, 0, sizeof(gFilePoolAllocated));
+
+    for (i = 0; i < MAX_FILE_NUM; ++i) {
+        gFilePool[i].Id = i;
+        gFilePoolAllocated[i] = 0;
+    }
+
+    return EASY_SUCCESS;
+}
 
 EASY_STATUS
 EasyCreateFile(
@@ -147,7 +166,7 @@ EasyCreateFile(
     FileNameLen = GetFileNameLen(FileName);
     CopyMem(NewFile->Name, FileName, FileNameLen * sizeof(CHAR8));
     NewFile->Type = EASY_FILE_TYPE_NORMAL;
-    NewFile->Id = NewFileId;
+    // NewFile->Id = NewFileId;
     NewFile->FileSize = 0;
 
     Status = AllocBlock(&NewBlockId);
