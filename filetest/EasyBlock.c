@@ -75,7 +75,7 @@ AllocBlock(
 {
     UINTN i;
 
-    for (int i = 0; i < MAX_BLOCK; ++i) {
+    for (i = 0; i < MAX_BLOCK; ++i) {
         if (!gBlockSystem.Bitmap[i]) {
             *BlockId = i;
             gBlockSystem.Bitmap[i] = 1;
@@ -88,8 +88,10 @@ AllocBlock(
 
 EASY_STATUS
 FreeBlock(
-    UINTN *BlockId
+    IN UINTN BlockId
     )
 {
+    gBlockSystem.Bitmap[BlockId] = 0;
+
     return EASY_SUCCESS;
 }
