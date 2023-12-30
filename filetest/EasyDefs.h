@@ -26,6 +26,7 @@ typedef bool BOOLEAN;
 #define EASY_FILE_NOT_FOUND_ERROR       12
 
 #define EASY_DIR_TOO_MANY_FILE_ERROR    100
+#define EASY_DIR_NOT_FOUND_ERROR        101
 
 #define IN
 #define OUT

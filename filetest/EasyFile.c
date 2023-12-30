@@ -108,6 +108,23 @@ EasyDirAddFile(
     return -EASY_DIR_TOO_MANY_FILE_ERROR;
 }
 
+EASY_STATUS
+EasyDirRemoveFile(
+    EASY_FILE_DIR *Dir,
+    UINTN FileId
+)
+{    
+    UINTN i;
+    
+    for (i = 0; i< MAX_FILE_NUM; ++i){
+        if(Dir->FileIds[i] == FileId){
+            Dir->FileIds[i] = 0;
+            return EASY_SUCCESS;
+        }
+    }
+    return -EASY_DIR_NOT_FOUND_ERROR;
+}
+
 STATIC
 UINTN
 GetFile(
@@ -124,6 +141,11 @@ GetFile(
 
     return -EASY_FILE_NO_MORE_FILE_ERROR;
 }
+
+UINTN
+ClearFileInfo(
+    File
+)
 
 /************************************************************
  *        File Layer
@@ -169,6 +191,37 @@ EasyRemoveFile(
     VOID *FileName
     )
 {
+    EASY_STATUS Status;
+    EASY_FILE *DeleteFile = NULL;
+    UINTN FileIdToRemove;
+    EASY_FILE_DIR *CurDir;
+
+    CurDir = GetCurDir();
+    DeleteFile = EasyDirGetFile(CurDir, FileName);
+    if (!DeleteFile) {
+        return -EASY_FILE_NOT_FOUND_ERROR;
+    }
+
+    // Free block memory
+    Status = FreeBlock(DeleteFile->BlockId[0], DeleteFile->BlockNum);
+    if (Status != EASY_SUCCESS) {
+        return Status;
+    }
+
+    // Update dir status
+    Status = EasyDirRemoveFile(CurDir, DeleteFile->Id);
+    if (Status != EASY_SUCCESS) {
+        return Status;
+    }
+
+    // Clear file data
+    &gFilePool[DeleteFile->Id] = NULL;
+
+    FileNameLen = GetFileNameLen(FileName);
+    SetMem(NewFile->Name, MAX_FILE_NAME_LEN, 0);
+    NewFile->FileSize = 0;
+    NewFile->BlockNum = 0;
+
     return EASY_SUCCESS;
 }
 

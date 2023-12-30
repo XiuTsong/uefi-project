@@ -44,7 +44,8 @@ AllocBlock(
 
 EASY_STATUS
 FreeBlock(
-    UINTN *BlockId
+    UINTN *BlockId,
+    UINTN BlockNum
     );
 
 #endif
