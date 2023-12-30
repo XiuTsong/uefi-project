@@ -32,5 +32,6 @@ typedef bool BOOLEAN;
 #define OUT
 
 #define CopyMem memcpy
+#define SetMem(dest, size, value) memset(dest, value, size)
 
 #endif
