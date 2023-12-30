@@ -11,6 +11,10 @@ int main(int argc, char *argv[]) {
   char str[100];
   char *args[10];
   char cmd[10];
+  // strcpy(cmd, "start");
+  // if (syscall(EFI, cmd, 0, args)) {
+  //   print("failed to create edk-fs\n");
+  // }
   int num = 0;
   while (1) {
     fputs("edk-fs > ", stdout);
@@ -25,6 +29,7 @@ int main(int argc, char *argv[]) {
     char *token = strtok(str, " "); // 以空格为分隔符
     if (!strcmp(token, "exit") || !strcmp(token, "quit") ||
         !strcmp(token, "q")) {
+
       break;
     } else if (!strcmp(token, "create") || !strcmp(token, "remove") ||
                !strcmp(token, "write") || !strcmp(token, "read") ||
@@ -36,12 +41,12 @@ int main(int argc, char *argv[]) {
         if (token != NULL) {
           args[num] = malloc(strlen(token) + 1);
           strcpy(args[num], token);
-          printf("args[%d]:%s\n", num, args[num]);
+          //   printf("args[%d]:%s\n", num, args[num]);
           num++;
         }
       }
       printf("syscall EFI with cmd: %s,args num: %d\n", cmd, num);
-      //   syscall(EFI, cmd, num, args);
+      syscall(EFI, cmd, num, args);
       for (; num > 0; num--) {
         free(args[num - 1]);
         num--;
@@ -50,5 +55,6 @@ int main(int argc, char *argv[]) {
       printf("cmd %s not found\n", token);
     }
   }
+  printf("edk-fs finish!\n");
   return 0;
 }
