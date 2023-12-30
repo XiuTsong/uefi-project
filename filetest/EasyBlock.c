@@ -5,7 +5,7 @@
 EASY_BLOCK_SYSTEM gBlockSystem;
 
 EASY_STATUS
-InitBlocks(
+InitBlockLayer(
     IN VOID *MemoryPool,
     IN UINTN Nbyte
     )
@@ -24,7 +24,6 @@ InitBlocks(
     return EASY_SUCCESS;
 }
 
-STATIC
 EASY_BLOCK*
 GetBlock(
     IN UINTN BlockId

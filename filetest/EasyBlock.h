@@ -17,7 +17,7 @@ typedef struct {
 } EASY_BLOCK;
 
 EASY_STATUS
-InitBlocks(
+InitBlockLayer(
     VOID *MemoryPool,
     UINTN Nbyte
     );
@@ -44,6 +44,11 @@ AllocBlock(
 
 EASY_STATUS
 FreeBlock(
+    UINTN BlockId
+    );
+
+EASY_BLOCK*
+GetBlock(
     UINTN BlockId
     );
 

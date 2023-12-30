@@ -6,7 +6,8 @@
 
 typedef unsigned int EASY_FILE_TYPE;
 
-#define EASY_FILE_TYPE_NORMAL   0
+#define EASY_TYPE_FILE   0
+#define EASY_TYPE_DIR   0
 
 #define MAX_FILE_NUM 100
 #define MAX_FILE_NAME_LEN 20
@@ -17,20 +18,16 @@ typedef struct {
     CHAR8 Name[MAX_FILE_NAME_LEN];
     UINTN BlockIds[MAX_FILE_BLOCKS];
     UINTN BlockNum;
-    EASY_FILE_TYPE Type;
     UINTN FileSize;     // Byte
+    EASY_FILE_TYPE Type; // EASY_FILE can be file or directory
     UINTN Id;
 } EASY_FILE;
 
 typedef struct {
     UINTN FileIds[MAX_FILE_NUM];
-    UINTN DirIds[MAX_FILE_NUM];
-} EASY_FILE_DIR;
-
-EASY_STATUS
-InitEasyFile(
-    VOID
-    );
+    EASY_FILE *SelfFile; // Point to EASY_FILE struct that contains itself
+    UINTN FileNum;
+} EASY_FILE_DIR; // sizeof(EASY_FILE_DIR) = 8Byte * 101 < 1024Byte(1 Block)
 
 EASY_STATUS
 EasyCreateFile(
@@ -56,4 +53,14 @@ EasyWriteFile(
     VOID *Buf
     );
 
+EASY_STATUS
+EasyDirListFiles(
+    VOID *DirName,
+    VOID *buf
+    );
+
+EFI_STATUS
+InitFileLayer(
+    VOID
+    );
 #endif
