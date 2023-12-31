@@ -4,6 +4,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include "linux/limits.h"
 #include <linux/capability.h>
 #include <linux/cn_proc.h>
 #include <linux/cpu.h>
@@ -841,27 +842,36 @@ SYSCALL_DEFINE0(edk_runtime_sample) {
 }
 
 /*new paras syscall*/
+#define MY_STRING_MAX 100
+#define MY_CMD_MAX 20
+#define MY_ARG_MAX 10
 
 SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
                 const char __user **, args) {
   char *comm;
   pr_info("Hello new system call!\n");
   // get args
-  comm = kmalloc(PATH_MAX, GFP_KERNEL);
+  comm = kmalloc(MY_CMD_MAX, GFP_KERNEL);
+  memset(comm, 0, MY_CMD_MAX);
+
   if (comm == NULL) {
     pr_info("Memory allocation failed for comm\n");
     return -ENOMEM; // Return appropriate error code
   }
 
-  if (copy_from_user(comm, cmd, PATH_MAX) != 0) {
+  pr_info("cmd: %p\n", cmd);
+  if (copy_from_user(comm, cmd, 10) != 0) {
     pr_info("copy_from_user failed for comm\n");
     kfree(comm);    // Free allocated memory before returning
     return -EFAULT; // Return appropriate error code
   }
   pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
   if (num > 0) {
-    char **kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
+    char **kargs;
     int i;
+
+    kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
+    memset(kargs, 0, num * sizeof(char *));
 
     if (kargs == NULL) {
       pr_info("Memory allocation failed for kargs\n");
@@ -871,7 +881,8 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
 
     // copy_from_user(kargs, (void *)args, num * sizeof(char *));
     for (i = 0; i < num; i++) {
-      kargs[i] = kmalloc(PATH_MAX, GFP_KERNEL);
+      kargs[i] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
+      memset(kargs[i], 0, MY_STRING_MAX);
       if (kargs[i] == NULL) {
         pr_info("Memory allocation failed for kargs[%d]\n", i);
         // Free previously allocated memory before returning
@@ -882,7 +893,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
         kfree(comm);
         return -ENOMEM; // Return appropriate error code
       }
-      if (copy_from_user(kargs[i], args[i], PATH_MAX) != 0) {
+      if (copy_from_user(kargs[i], args[i], MY_STRING_MAX) != 0) {
         pr_info("copy_from_user failed for kargs[%d]\n", i);
         // Free previously allocated memory before returning
         while (i >= 0) {
@@ -943,10 +954,13 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     if (!strncmp(comm, "read", 10)) {
       // assign alternal read buffer
       kargs = kmalloc((num + 1) * sizeof(char *), GFP_KERNEL);
-      kargs[num] = kmalloc(PATH_MAX, GFP_KERNEL);
+      memset(kargs, 0, (num + 1) * sizeof(char *));
+      kargs[num] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
+      memset(kargs[num], 0, MY_STRING_MAX);
       pr_info("test_efi buffer para %d: %s.\n", num, kargs[num]);
     } else {
       kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
+      memset(kargs, 0, num * sizeof(char *));
     }
     if (kargs == NULL) {
       pr_info("Memory allocation failed for kargs\n");
@@ -956,7 +970,8 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
 
     // copy_from_user(kargs, (void *)args, num * sizeof(char *));
     for (i = 0; i < num; i++) {
-      kargs[i] = kmalloc(PATH_MAX, GFP_KERNEL);
+      kargs[i] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
+      memset(kargs[i], 0, MY_STRING_MAX);
       if (kargs[i] == NULL) {
         pr_info("Memory allocation failed for kargs[%d]\n", i);
         // Free previously allocated memory before returning
@@ -967,7 +982,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
         kfree(comm);
         return -ENOMEM; // Return appropriate error code
       }
-      if (copy_from_user(kargs[i], args[i], PATH_MAX) != 0) {
+      if (copy_from_user(kargs[i], args[i], MY_STRING_MAX) != 0) {
         pr_info("copy_from_user failed for kargs[%d]\n", i);
         // Free previously allocated memory before returning
         while (i >= 0) {

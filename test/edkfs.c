@@ -6,14 +6,23 @@
 #include <unistd.h>
 
 #define EFI 332
+#define STRING_MAX 100
+#define CMD_MAX 20
+#define ARG_MAX 10
+
 int main(int argc, char *argv[]) {
   printf("welcome to edk-fs!\n");
-  char str[100];
-  char *args[10];
-  char cmd[10];
+  char str[STRING_MAX];
+  char *args[ARG_MAX];
+  char cmd[CMD_MAX];
+
+  memset(cmd, 0, CMD_MAX);
+  memset(str, 0, STRING_MAX);
+  memset(args, 0, ARG_MAX);
+
   strcpy(cmd, "start");
   if (syscall(EFI, cmd, 0, args)) {
-    print("failed to create edk-fs\n");
+    printf("failed to create edk-fs\n");
   }
   int num = 0;
   while (1) {
@@ -39,7 +48,8 @@ int main(int argc, char *argv[]) {
       while (token != NULL) {
         token = strtok(NULL, " ");
         if (token != NULL) {
-          args[num] = malloc(strlen(token) + 1);
+          args[num] = malloc(STRING_MAX);
+          memset(args[num], 0, STRING_MAX);
           strcpy(args[num], token);
           //   printf("args[%d]:%s\n", num, args[num]);
           num++;
