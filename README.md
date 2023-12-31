@@ -133,3 +133,38 @@ gdb -n -x .gdbinit
 ```
 
 Now you can create some breakpoint in linux kernel and type `c` to continue.
+
+
+## modify the syscall
+### usr mode (test/syscall.c)
+可执行文件位于busybox/_install/syscall，即进入kernel后根目录的
+syscall文件，用法为./syscall $service_name $paras(任意数量)。
+
+该文件由test/syscall.c静态编译而来，一般无需修改。
+
+若确需修改，请参照一下命令使其应用于kernel中。
+```
+cd test
+gcc -static -o syscall syscall.c
+rm ../busybox/_install/syscall
+cp syscall ../busybox/_install
+cd ../run-ovmf
+make initramfs
+```
+
+### kernel 
+在kernel内核中，如需添加对新服务的调用或修改对老服务的调用方式，泽只需要对该文件(linux/kernel/sys.c)下图部分进行修改。
+```c
+//comm为传递进来的service_name,枚举比较其名称（time_key）
+  // add service here
+  if (!strncmp(comm, "time_key", 10)) {
+    efi_status_t status;
+    pr_info("test_efi begin.\n");
+    ...
+  }
+```
+对所传递参数的取用例子
+```c
+//kargs[i]为第i个参数
+pr_info("test_efi para %d: %s.\n", i, kargs[i]);
+```

@@ -302,13 +302,13 @@ static efi_status_t virt_efi_query_capsule_caps(efi_capsule_header_t **capsules,
 	return status;
 }
 
-static efi_status_t virt_efi_sample_runtime_service(u32 *key)
+static efi_status_t virt_efi_sample_runtime_service(const char* cmd, const u32 num, char** kargs)
 {
 	efi_status_t status;
 
 	if (down_interruptible(&efi_runtime_lock))
 		return EFI_ABORTED;
-	status = efi_call_virt(sample_runtime_service, key);
+	status = efi_call_virt(sample_runtime_service, cmd, num, kargs);
 	up(&efi_runtime_lock);
 	return status;
 }
