@@ -11,10 +11,10 @@ int main(int argc, char *argv[]) {
   char str[100];
   char *args[10];
   char cmd[10];
-  // strcpy(cmd, "start");
-  // if (syscall(EFI, cmd, 0, args)) {
-  //   print("failed to create edk-fs\n");
-  // }
+  strcpy(cmd, "start");
+  if (syscall(EFI, cmd, 0, args)) {
+    print("failed to create edk-fs\n");
+  }
   int num = 0;
   while (1) {
     fputs("edk-fs > ", stdout);
