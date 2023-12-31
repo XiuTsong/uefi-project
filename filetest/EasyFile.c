@@ -4,7 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 
-EASY_FILE_DIR *RootDir;
+EASY_DIR *RootDir;
+EASY_DIR *CurrentDir;
 EASY_FILE gFilePool[MAX_FILE_NUM];
 BOOLEAN gFilePoolAllocated[MAX_FILE_NUM];
 
@@ -16,13 +17,19 @@ CreateFileInternal(
 
 EASY_STATUS
 EasyDirAddFile(
-    EASY_FILE_DIR *Dir,
+    EASY_DIR *Dir,
     UINTN FileId
+    );
+
+EASY_FILE*
+EasyDirGetFile(
+    EASY_DIR *Dir,
+    VOID *FileName
     );
 
 EASY_STATUS
 EasyDirRemoveFile(
-    EASY_FILE_DIR *Dir,
+    EASY_DIR *Dir,
     UINTN FileId
 );
 
@@ -126,10 +133,52 @@ EasyInitFilePool(
 /************************************************************
  *        EasyDir Related
  ************************************************************/
+#define GetCurDir() (CurrentDir)
+#define SetCurDir(Dir) (CurrentDir = (Dir))
+
+STATIC
+EASY_DIR*
+EasyFileToEasyDir(
+    EASY_FILE* File
+    )
+{
+    if (File->Type != EASY_TYPE_DIR) 
+        return NULL;
+
+    return (EASY_DIR *)GetBlock(File->BlockIds[0]);
+}
+
+STATIC
+EASY_FILE*
+EasyDirToEasyFile(
+    EASY_DIR* Dir
+    )
+{
+    return Dir->SelfFile;
+}
+
+EASY_DIR*
+GetEasyDirByName(
+    VOID *DirName,
+    EASY_DIR *CurDir
+    )
+{
+    EASY_FILE *DirFile;
+    EASY_DIR *Dir;
+
+    DirFile = EasyDirGetFile(CurDir, DirName);
+    if (!DirFile || DirFile->Type != EASY_TYPE_DIR) {
+        return NULL;
+    }
+
+    Dir = EasyFileToEasyDir(DirFile);
+
+    return Dir;
+}
 
 BOOLEAN
 EasyDirCheckFileExist(
-    EASY_FILE_DIR *Dir,
+    EASY_DIR *Dir,
     VOID *FileName
     )
 {
@@ -147,13 +196,13 @@ EasyDirCheckFileExist(
 }
 
 STATIC
-EASY_FILE_DIR*
+EASY_DIR*
 CreateDirInternal(
     VOID *FileName
     )
 {
     EASY_FILE *NewDirFile;
-    EASY_FILE_DIR *NewDir;
+    EASY_DIR *NewDir;
 
     /** Directory is also a type of "EASY_FILE" */
     NewDirFile = CreateFileInternal(FileName, EASY_TYPE_DIR);
@@ -162,21 +211,22 @@ CreateDirInternal(
         return NULL;
     }
 
-    NewDir = (EASY_FILE_DIR *)GetBlock(NewDirFile->BlockIds[0]);
+    NewDir = EasyFileToEasyDir(NewDirFile);
     NewDir->SelfFile = NewDirFile;
     NewDir->FileNum = 0;
 
     return NewDir;
 }
 
-EASY_FILE_DIR*
+EASY_DIR*
 EasyCreateDir(
     VOID *FileName,
     BOOLEAN IsRoot,
-    EASY_FILE_DIR *CurDir
+    EASY_DIR *CurDir
     )
 {
-    EASY_FILE_DIR *NewDir;
+    EASY_DIR *NewDir;
+    EASY_DIR *DotDotDir; // cd ..
 
     if (!IsRoot && EasyDirCheckFileExist(CurDir, FileName)) {
         // FIXME: Already exist, return NULL
@@ -187,6 +237,22 @@ EasyCreateDir(
     if (!NewDir) {
         return NULL;
     }
+
+    DotDotDir = CreateDirInternal("..");
+    if (!DotDotDir) {
+        printf("%s: Create DotDotDir Failed\n", __func__);
+        return NULL;
+    }
+
+    if (IsRoot) {
+        /** RootDir: .. -> RootDir itself */
+        EasyDirAddFile(DotDotDir, EasyDirToEasyFile(NewDir)->Id);
+    } else {
+        EasyDirAddFile(DotDotDir, EasyDirToEasyFile(CurDir)->Id);
+    }
+
+    /** Add .. to newly created directory */
+    EasyDirAddFile(NewDir, EasyDirToEasyFile(DotDotDir)->Id);
 
     if (!IsRoot && !CurDir) {
         EasyDirAddFile(CurDir, NewDir->SelfFile->Id);
@@ -204,6 +270,7 @@ EasyCreateRootDir(
     if (!RootDir) {
         return -EASY_DIR_CREATE_ROOT_DIR_FAILED;
     }
+    CurrentDir = RootDir;
 
     return EASY_SUCCESS;
 }
@@ -214,14 +281,33 @@ EasyDirListFiles(
     VOID *buf
     )
 {
-    EASY_FILE_DIR *Dir;
+    EASY_DIR *Dir;
     // TODO
+    return EASY_SUCCESS;
+}
+
+EASY_STATUS
+EasyChangeDir(
+    VOID *DirName
+    )
+{
+    EASY_DIR *Dir;
+    EASY_DIR *CurDir;
+
+    CurDir = GetCurDir();
+    Dir = GetEasyDirByName(DirName, CurDir);
+    if (!Dir) {
+        printf("%s: get dir failed\n", __func__);
+        return -EASY_DIR_NOT_FOUND_ERROR;
+    }
+    SetCurDir(Dir);
+
     return EASY_SUCCESS;
 }
 
 EASY_FILE*
 EasyDirGetFile(
-    EASY_FILE_DIR *Dir,
+    EASY_DIR *Dir,
     VOID *FileName
     )
 {
@@ -239,19 +325,9 @@ EasyDirGetFile(
     return NULL;
 }
 
-STATIC
-EASY_FILE_DIR*
-GetCurDir(
-    VOID
-    )
-{
-    /** Currently, we only create file at root dir */
-    return RootDir;
-}
-
 EASY_STATUS
 EasyDirAddFile(
-    EASY_FILE_DIR *Dir,
+    EASY_DIR *Dir,
     UINTN FileId
     )
 {
@@ -269,7 +345,7 @@ EasyDirAddFile(
 
 EASY_STATUS
 EasyDirRemoveFile(
-    EASY_FILE_DIR *Dir,
+    EASY_DIR *Dir,
     UINTN FileId
 )
 {
@@ -322,7 +398,7 @@ EasyCreateFile(
     EASY_STATUS Status;
     EASY_FILE *NewFile = NULL;
     UINTN NewBlockId;
-    EASY_FILE_DIR *CurDir;
+    EASY_DIR *CurDir;
 
     CurDir = GetCurDir();
 
@@ -350,7 +426,7 @@ EasyRemoveFile(
     UINTN i;
     EASY_STATUS Status;
     EASY_FILE *DeleteFile = NULL;
-    EASY_FILE_DIR *CurDir;
+    EASY_DIR *CurDir;
 
     CurDir = GetCurDir();
 
@@ -393,7 +469,7 @@ EasyReadFile(
     VOID *Buf
     )
 {
-    EASY_FILE_DIR *CurDir;
+    EASY_DIR *CurDir;
     EASY_FILE *File;
 
     CurDir = GetCurDir();
@@ -420,7 +496,7 @@ EasyWriteFile(
     VOID *Buf
     )
 {
-    EASY_FILE_DIR *CurDir;
+    EASY_DIR *CurDir;
     EASY_FILE *File;
     EASY_STATUS Status;
     UINTN WritePos;
@@ -470,4 +546,12 @@ InitFileLayer(
     }
 
     return Status;
+}
+
+EFI_STATUS
+EasyPwd(
+    VOID *buf
+    )
+{
+    return EASY_SUCCESS;
 }

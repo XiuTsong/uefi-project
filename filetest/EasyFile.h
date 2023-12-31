@@ -27,7 +27,7 @@ typedef struct {
     UINTN FileIds[MAX_FILE_NUM];
     EASY_FILE *SelfFile; // Point to EASY_FILE struct that contains itself
     UINTN FileNum;
-} EASY_FILE_DIR; // sizeof(EASY_FILE_DIR) = 8Byte * 101 < 1024Byte(1 Block)
+} EASY_DIR; // sizeof(EASY_FILE_DIR) = 8Byte * 101 < 1024Byte(1 Block)
 
 EASY_STATUS
 EasyCreateFile(
