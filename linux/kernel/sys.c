@@ -869,14 +869,14 @@ SYSCALL_DEFINE0(edk_runtime_sample) {
   if (status != EFI_SUCCESS) {
     pr_info("test_get_time failed\n");
   }
-  // unsigned int key = 0;
-  // status = efi.sample_runtime_service(&key);
-  // pr_info("sample_runtime_service key: %u\n", key);
-  // if (status != EFI_SUCCESS) {
-  //   pr_info("test_sample_time_service failed, status %lx\n", status);
-  //   pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-  //           (1UL << (BITS_PER_LONG - 1)));
-  // }
+  unsigned int key = 0;
+  status = efi.sample_runtime_service(&key);
+  pr_info("sample_runtime_service key: %u\n", key);
+  if (status != EFI_SUCCESS) {
+    pr_info("test_sample_time_service failed, status %lx\n", status);
+    pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
+            (1UL << (BITS_PER_LONG - 1)));
+  }
   return 0;
 }
 
@@ -955,14 +955,14 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     if (status != EFI_SUCCESS) {
       pr_info("test_get_time failed\n");
     }
-    // unsigned int key = 0;
-    // status = efi.sample_runtime_service(&key);
-    // pr_info("sample_runtime_service key: %u\n", key);
-    // if (status != EFI_SUCCESS) {
-    //   pr_info("test_sample_time_service failed, status %lx\n", status);
-    //   pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-    //           (1UL << (BITS_PER_LONG - 1)));
-    // }
+    unsigned int key = 0;
+    status = efi.sample_runtime_service(&key);
+    pr_info("sample_runtime_service key: %u\n", key);
+    if (status != EFI_SUCCESS) {
+      pr_info("test_sample_time_service failed, status %lx\n", status);
+      pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
+              (1UL << (BITS_PER_LONG - 1)));
+    }
   }
   // if (num > 0) {
   //   for (i = 0; i < num; i++) {
@@ -970,95 +970,6 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
   //   }
   //   kfree(kargs);
   // }
-  if (!strncmp(comm, "create", 10) || !strncmp(comm, "read", 10) 
-      || !strncmp(comm, "write", 10) || !strncmp(comm, "remove", 10)
-      || !strncmp(comm, "start", 10)) {
-    
-    efi_status_t status;
-    pr_info("sample_runtime_service begin.\n");
-
-    // analyze **args** params
-    // comm       params
-    // create     char* name
-    // read       char* name, int byte_size
-    // write      char* name, char* content, int byte_size
-    // remove     char* name
-    pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
-    if (num <= 0) {
-      pr_info("ERR: params absent.");
-      return 0;
-    }
-    char **kargs = NULL;
-    if (!strncmp(comm, "read", 10)) {
-      // assign alternal read buffer
-      kargs = kmalloc((num + 1) * sizeof(char *), GFP_KERNEL);
-      kargs[num] = kmalloc(PATH_MAX, GFP_KERNEL);
-      pr_info("test_efi buffer para %d: %s.\n", num, kargs[num]);
-    } else {
-      kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
-    }
-    if (kargs == NULL) {
-      pr_info("Memory allocation failed for kargs\n");
-      kfree(comm);    // Free allocated memory before returning
-      return -ENOMEM; // Return appropriate error code
-    }
-    int i;
-
-    // copy_from_user(kargs, (void *)args, num * sizeof(char *));
-    for (i = 0; i < num; i++) {
-      kargs[i] = kmalloc(PATH_MAX, GFP_KERNEL);
-      if (kargs[i] == NULL) {
-        pr_info("Memory allocation failed for kargs[%d]\n", i);
-        // Free previously allocated memory before returning
-        while (i > 0) {
-          kfree(kargs[--i]);
-        }
-        kfree(kargs);
-        kfree(comm);
-        return -ENOMEM; // Return appropriate error code
-      }
-      if (copy_from_user(kargs[i], args[i], PATH_MAX) != 0) {
-        pr_info("copy_from_user failed for kargs[%d]\n", i);
-        // Free previously allocated memory before returning
-        while (i >= 0) {
-          kfree(kargs[i--]);
-        }
-        kfree(kargs);
-        kfree(comm);
-        return -EFAULT; // Return appropriate error code
-      }
-      pr_info("test_efi para %d: %s.\n", i, kargs[i]);
-    }
-    
-    // **kargs** params
-    // comm       params
-    // create     char* name
-    // read       char* name, int byte_size, char* buffer
-    // write      char* name, char* content, int byte_size
-    // remove     char* name
-    status = efi.sample_runtime_service(comm, num, kargs);
-    if (status != EFI_SUCCESS) {
-      pr_info("sample_time_service failed, status %lx\n", status);
-      pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-            (1UL << (BITS_PER_LONG - 1)));
-      return status;
-    } else {
-      if (!strncmp(comm, "create", 10)) {
-        pr_info("create sucess! file: %s\n", kargs[0]);
-      } else if (!strncmp(comm, "read", 10)) {
-        pr_info("read sucess! file: %s, byte: %s\n", kargs[0], kargs[1]);
-        pr_info("%s\n", kargs[2]);
-      } else if (!strncmp(comm, "write", 10)) {
-        pr_info("write sucess! file: %s, byte: %s\n", kargs[0], kargs[2]);
-      } else if (!strncmp(comm, "remove", 10)) {
-        pr_info("remove sucess! file: %s\n", kargs[0]);
-      } else if (!strncmp(comm, "start", 10)) {
-        pr_info("filesystem start!\n");
-      } else {
-        pr_info("ERR: Unknown Command! comm: %s\n", comm);
-      }
-    }
-  }
   kfree(comm);
   return 0;
 }

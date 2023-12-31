@@ -548,7 +548,7 @@ typedef efi_status_t efi_query_variable_store_t(u32 attributes,
 						unsigned long size,
 						bool nonblocking);
 
-typedef efi_status_t efi_sample_runtime_service_t(const char* cmd, const u32 num, char** kargs);
+typedef efi_status_t efi_sample_runtime_service_t(u32 *key);
 
 void efi_native_runtime_setup(void);
 

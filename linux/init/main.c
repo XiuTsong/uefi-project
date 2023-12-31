@@ -965,11 +965,13 @@ efi_status_t get_system_time(void)
 	return EFI_SUCCESS;
 }
 
-efi_status_t sample_runtime_service(const char* cmd, const uint num, char** kargs)
+efi_status_t sample_runtime_service(void)
 {
-	efi_status_t status = efi.sample_runtime_service(cmd, num, kargs);
+	u32 key = 0;
+	efi_status_t status = efi.sample_runtime_service(&key);
 
-	pr_info("sample_runtime_service cmd: %s, num: %u\n", cmd, num);
+	pr_info("sample_runtime_service key: %u\n", key);
+
 	return status;
 }
 
@@ -984,11 +986,11 @@ static void test_efi(void)
 		pr_info("test_get_time failed\n");
 	}
 
-	// status = sample_runtime_service();
-	// if (status != EFI_SUCCESS) {
-	// 	pr_info("test_sample_time_service failed, status %lx\n", status);
-	// 	pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER, (1UL << (BITS_PER_LONG-1)));
-	// }
+	status = sample_runtime_service();
+	if (status != EFI_SUCCESS) {
+		pr_info("test_sample_time_service failed, status %lx\n", status);
+		pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER, (1UL << (BITS_PER_LONG-1)));
+	}
 }
 
 static int __ref kernel_init(void *unused)
