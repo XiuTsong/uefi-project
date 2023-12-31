@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 
   memset(cmd, 0, CMD_MAX);
   memset(str, 0, STRING_MAX);
-  memset(args, 0, ARG_MAX);
+  memset(args, 0, ARG_MAX * sizeof(char *));
 
   strcpy(cmd, "start");
   if (syscall(EFI, cmd, 0, args)) {
@@ -51,16 +51,19 @@ int main(int argc, char *argv[]) {
           args[num] = malloc(STRING_MAX);
           memset(args[num], 0, STRING_MAX);
           strcpy(args[num], token);
-          //   printf("args[%d]:%s\n", num, args[num]);
+          printf("args[%d]:%s\n", num, args[num]);
           num++;
         }
       }
+      // for (int i = 0; i < num; i++) {
+      //   printf("args[%d]:%s\n", i, args[i]);
+      // }
       printf("syscall EFI with cmd: %s,args num: %d\n", cmd, num);
       syscall(EFI, cmd, num, args);
       for (; num > 0; num--) {
         free(args[num - 1]);
-        num--;
       }
+      // printf("num: %d\n", num);
     } else {
       printf("cmd %s not found\n", token);
     }
