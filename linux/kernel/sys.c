@@ -884,9 +884,10 @@ SYSCALL_DEFINE0(edk_runtime_sample) {
 
 SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
                 const char __user **, args) {
+  char *comm;
   pr_info("Hello new system call!\n");
   // get args
-  char *comm = kmalloc(PATH_MAX, GFP_KERNEL);
+  comm = kmalloc(PATH_MAX, GFP_KERNEL);
   if (comm == NULL) {
     pr_info("Memory allocation failed for comm\n");
     return -ENOMEM; // Return appropriate error code
@@ -900,12 +901,13 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
   pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
   if (num > 0) {
     char **kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
+    int i;
+
     if (kargs == NULL) {
       pr_info("Memory allocation failed for kargs\n");
       kfree(comm);    // Free allocated memory before returning
       return -ENOMEM; // Return appropriate error code
     }
-    int i;
 
     // copy_from_user(kargs, (void *)args, num * sizeof(char *));
     for (i = 0; i < num; i++) {
@@ -937,9 +939,9 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
   // add service here
   if (!strncmp(comm, "time_key", 10)) {
     efi_status_t status;
-    pr_info("test_efi begin.\n");
     efi_time_t system_time;
     efi_time_cap_t time_cap;
+    pr_info("test_efi begin.\n");
 
     status = efi.get_time(&system_time, &time_cap);
 
@@ -955,26 +957,15 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     if (status != EFI_SUCCESS) {
       pr_info("test_get_time failed\n");
     }
-    // unsigned int key = 0;
-    // status = efi.sample_runtime_service(&key);
-    // pr_info("sample_runtime_service key: %u\n", key);
-    // if (status != EFI_SUCCESS) {
-    //   pr_info("test_sample_time_service failed, status %lx\n", status);
-    //   pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-    //           (1UL << (BITS_PER_LONG - 1)));
-    // }
   }
-  // if (num > 0) {
-  //   for (i = 0; i < num; i++) {
-  //     kfree(kargs[i]);
-  //   }
-  //   kfree(kargs);
-  // }
+
   if (!strncmp(comm, "create", 10) || !strncmp(comm, "read", 10) 
       || !strncmp(comm, "write", 10) || !strncmp(comm, "remove", 10)
       || !strncmp(comm, "start", 10)) {
     
     efi_status_t status;
+    char **kargs = NULL;
+    int i;
     pr_info("sample_runtime_service begin.\n");
 
     // analyze **args** params
@@ -988,7 +979,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
       pr_info("ERR: params absent.");
       return 0;
     }
-    char **kargs = NULL;
+
     if (!strncmp(comm, "read", 10)) {
       // assign alternal read buffer
       kargs = kmalloc((num + 1) * sizeof(char *), GFP_KERNEL);
@@ -1002,7 +993,6 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
       kfree(comm);    // Free allocated memory before returning
       return -ENOMEM; // Return appropriate error code
     }
-    int i;
 
     // copy_from_user(kargs, (void *)args, num * sizeof(char *));
     for (i = 0; i < num; i++) {
