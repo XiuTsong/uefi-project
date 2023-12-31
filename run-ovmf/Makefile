@@ -74,3 +74,30 @@ run: clean-debug
 	  -m 512M \
 	  -drive file=fat:rw:$(EDK2_BUILD)/X64,id=fat32,format=raw
 
+lhz-run-only: clean-debug
+	/home/moenosnkun/Downloads/qemu-8.0.4/build/qemu-system-x86_64 -kernel $(LINUX_IMAGE) \
+	  -initrd $(cur_dir)/initramfs-busybox-x64.cpio.gz \
+	  --bios $(EDK2_BIN) \
+	  --debugcon file:"ovmf-boot.log" \
+	  -global isa-debugcon.iobase=0x402 \
+	  -global ICH9-LPC.disable_s3=1 \
+	  -nographic \
+	  -append "root=/dev/ram init=/init console=ttyS0 efi=debug" \
+	  -m 512M \
+	  -drive file=fat:rw:$(EDK2_BUILD)/X64,id=fat32,format=raw \
+
+lhz-run: clean-debug
+	/home/moenosnkun/Downloads/qemu-8.0.4/build/qemu-system-x86_64  -s -S \
+	  -kernel $(LINUX_IMAGE) \
+	  -initrd $(cur_dir)/initramfs-busybox-x64.cpio.gz \
+	  --bios $(EDK2_BIN) \
+	  --debugcon file:"ovmf-boot.log" \
+	  -global isa-debugcon.iobase=0x402 \
+	  -global ICH9-LPC.disable_s3=1 \
+	  -nographic \
+	  -append "root=/dev/ram init=/init console=ttyS0 efi=debug" \
+	  -m 512M \
+	  -drive file=fat:rw:$(EDK2_BUILD)/X64,id=fat32,format=raw
+
+
+
