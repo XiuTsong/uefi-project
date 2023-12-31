@@ -814,46 +814,14 @@ SYSCALL_DEFINE0(getpid) { return task_tgid_vnr(current); }
 /* Thread ID - the internal kernel "pid" */
 SYSCALL_DEFINE0(gettid) { return task_pid_vnr(current); }
 
-// /*new syscall*/
-// SYSCALL_DEFINE0(edk_runtime) {
-//   pr_info("Hello new system call!\n");
-//   efi_status_t status;
-//   pr_info("test_efi begin.\n");
-//   efi_time_t system_time;
-//   efi_time_cap_t time_cap;
-
-//   status = efi.get_time(&system_time, &time_cap);
-
-//   if (status != EFI_SUCCESS) {
-//     pr_info("efi get time failed\n");
-//     return status;
-//   }
-
-//   pr_info("Current system time: %d/%d/%d %d:%d:%d\n", system_time.year,
-//           system_time.month, system_time.day, system_time.hour,
-//           system_time.minute, system_time.second);
-
-//   if (status != EFI_SUCCESS) {
-//     pr_info("test_get_time failed\n");
-//   }
-//   unsigned int key = 0;
-//   status = efi.sample_runtime_service(&key);
-//   pr_info("sample_runtime_service key: %u\n", key);
-//   if (status != EFI_SUCCESS) {
-//     pr_info("test_sample_time_service failed, status %lx\n", status);
-//     pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-//             (1UL << (BITS_PER_LONG - 1)));
-//   }
-//   return 0;
-// }
-
 /*new syscall*/
 SYSCALL_DEFINE0(edk_runtime_sample) {
-  pr_info("Hello new system call!\n");
   efi_status_t status;
-  pr_info("test_efi begin.\n");
   efi_time_t system_time;
   efi_time_cap_t time_cap;
+
+  pr_info("test_efi begin.\n");
+  pr_info("Hello new system call!\n");
 
   status = efi.get_time(&system_time, &time_cap);
 
@@ -869,14 +837,6 @@ SYSCALL_DEFINE0(edk_runtime_sample) {
   if (status != EFI_SUCCESS) {
     pr_info("test_get_time failed\n");
   }
-  // unsigned int key = 0;
-  // status = efi.sample_runtime_service(&key);
-  // pr_info("sample_runtime_service key: %u\n", key);
-  // if (status != EFI_SUCCESS) {
-  //   pr_info("test_sample_time_service failed, status %lx\n", status);
-  //   pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-  //           (1UL << (BITS_PER_LONG - 1)));
-  // }
   return 0;
 }
 
@@ -962,7 +922,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
   if (!strncmp(comm, "create", 10) || !strncmp(comm, "read", 10) 
       || !strncmp(comm, "write", 10) || !strncmp(comm, "remove", 10)
       || !strncmp(comm, "start", 10)) {
-    
+
     efi_status_t status;
     char **kargs = NULL;
     int i;
@@ -975,10 +935,10 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     // write      char* name, char* content, int byte_size
     // remove     char* name
     pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
-    if (num <= 0) {
-      pr_info("ERR: params absent.");
-      return 0;
-    }
+    // if (num <= 0) {
+    //   pr_info("ERR: params absent.");
+    //   return 0;
+    // }
 
     if (!strncmp(comm, "read", 10)) {
       // assign alternal read buffer
@@ -1019,7 +979,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
       }
       pr_info("test_efi para %d: %s.\n", i, kargs[i]);
     }
-    
+
     // **kargs** params
     // comm       params
     // create     char* name
