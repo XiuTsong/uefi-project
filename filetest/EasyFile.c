@@ -127,6 +127,16 @@ EasyInitFilePool(
  *        EasyDir Related
  ************************************************************/
 
+STATIC
+EASY_FILE_DIR*
+GetCurDir(
+    VOID
+    )
+{
+    /** Currently, we only create file at root dir */
+    return RootDir;
+}
+
 BOOLEAN
 EasyDirCheckFileExist(
     EASY_FILE_DIR *Dir,
@@ -214,8 +224,34 @@ EasyDirListFiles(
     VOID *buf
     )
 {
-    EASY_FILE_DIR *Dir;
-    // TODO
+    EASY_FILE_DIR *CurDir;
+    CurDir = GetCurDir();
+
+    if (!CurDir) {
+        return -EASY_DIR_NOT_FOUND_ERROR;
+    }
+
+    UINTN i, j;
+    CHAR8 CurFileName[20];
+
+    for (i = 0; i < CurDir->FileNum; ++i) {
+        EASY_FILE *File = &gFilePool[CurDir->FileIds[i]];
+        
+        CopyMem(CurFileName, File->Name, MAX_FILE_NAME_LEN);
+        for (j = 0; j < MAX_FILE_NAME_LEN; ++j) {
+            if (CurFileName[j] == '\0') {
+                CurFileName[j] = ' ';
+                if(i == CurDir->FileNum - 1){
+                    CurFileName[j] = '\0';
+                }
+                ++j;
+                break;
+            }
+        }
+        CopyMem(buf, CurFileName, j);
+        buf += j;
+    }
+
     return EASY_SUCCESS;
 }
 
@@ -237,16 +273,6 @@ EasyDirGetFile(
     }
 
     return NULL;
-}
-
-STATIC
-EASY_FILE_DIR*
-GetCurDir(
-    VOID
-    )
-{
-    /** Currently, we only create file at root dir */
-    return RootDir;
 }
 
 EASY_STATUS

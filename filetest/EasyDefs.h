@@ -30,6 +30,8 @@ typedef bool BOOLEAN;
 #define EASY_DIR_TOO_MANY_FILE_ERROR    101
 #define EASY_DIR_NOT_FOUND_ERROR        102
 
+#define EASY_BUFFER_TOO_SMALL_ERROR     1001
+
 #define IN
 #define OUT
 
