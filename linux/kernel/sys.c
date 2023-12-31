@@ -999,8 +999,16 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     // comm       params
     // create     char* name
     // read       char* name, int byte_size, char* buffer
-    // write      char* name, char* content, int byte_size
+    // write      char* name, char* content
     // remove     char* name
+    // start
+    // ls
+    // pwd
+    // cd         char* name
+    // mkdir      char* name
+    // cat        char* name，char* buffer （无size的read，read all）
+    // echo       char* content char* name（和write一样，交换一下参数位置）
+    // torch      char* name（同create）
     status = efi.sample_runtime_service(comm, num, kargs);
     if (status != EFI_SUCCESS) {
       pr_info("sample_time_service failed, status %lx\n", status);
@@ -1008,7 +1016,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
               (1UL << (BITS_PER_LONG - 1)));
       return status;
     } else {
-      if (!strncmp(comm, "create", 10)) {
+      if (!strncmp(comm, "create", 10) || !strncmp(comm, "torch", 10)) {
         pr_info("create sucess! file: %s\n", kargs[0]);
       } else if (!strncmp(comm, "read", 10)) {
         pr_info("read sucess! file: %s, byte: %s\n", kargs[0], kargs[1]);
