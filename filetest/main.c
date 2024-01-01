@@ -78,7 +78,14 @@ void file_test_1(VOID)
     return;
   }
 
-  Status = EasyReadFile("def.txt", 3, buf);
+  // Status = EasyReadFile("def.txt", 3, buf);
+  // if (Status != EASY_SUCCESS) {
+  //   printf("Write File failed\n");
+  //   return;
+  // }
+  memset(buf, 0, 10);
+
+  Status = EasyCat("def.txt", buf);
   if (Status != EASY_SUCCESS) {
     printf("Write File failed\n");
     return;
@@ -131,7 +138,7 @@ void dir_test_1()
 {
   EASY_STATUS Status;
   CHAR8 buf[100];
-  memset(buf, 0, 10);
+  memset(buf, 0, 100);
 
   Status = EasyCreateFile("a.txt");
   Status |= EasyCreateFile("b.txt");
@@ -142,8 +149,37 @@ void dir_test_1()
   }
 
   EasyDirListFiles("/", buf);
-
   printf("files: %s\n", buf);
+  memset(buf, 0, 100);
+  EasyPwd(buf);
+  printf("CurDir: %s\n", buf);
+  memset(buf, 0, 100);
+
+  EasyCreateDir("dir1");
+
+  EasyDirListFiles("/", buf);
+  printf("files: %s\n", buf);
+  memset(buf, 0, 100);
+
+  EasyCd("dir1");
+  EasyPwd(buf);
+  printf("CurDir: %s\n", buf);
+  memset(buf, 0, 100);
+
+  EasyCd(".");
+  EasyPwd(buf);
+  printf("CurDir: %s\n", buf);
+  memset(buf, 0, 100);
+
+  EasyCd("..");
+  EasyPwd(buf);
+  printf("CurDir: %s\n", buf);
+  memset(buf, 0, 100);
+
+  EasyCd("..");
+  EasyPwd(buf);
+  printf("CurDir: %s\n", buf);
+  memset(buf, 0, 100);
 }
 
 int
@@ -159,9 +195,9 @@ main (
 
   file_test_1();
 
-  file_test_2();
+  // file_test_2();
 
-  dir_test_1();
+  // dir_test_1();
 
   return EFI_SUCCESS;
 }

@@ -84,9 +84,12 @@ CompareFileName(
 /************************************************************
  *        File Pool Related
  ************************************************************/
+
+#define FilePoolGetFileById(FileId) (&gFilePool[(FileId)])
+
 STATIC
 EASY_FILE*
-FilePoolGetFile(
+FilePoolGetNewFile(
     VOID *FileName,
     EASY_FILE_TYPE Type
     )
@@ -166,6 +169,10 @@ GetEasyDirByName(
     EASY_FILE *DirFile;
     EASY_DIR *Dir;
 
+    if (CompareFileName(DirName, "/")) {
+        return RootDir;
+    }
+
     DirFile = EasyDirGetFile(CurDir, DirName);
     if (!DirFile || DirFile->Type != EASY_TYPE_DIR) {
         return NULL;
@@ -219,13 +226,15 @@ CreateDirInternal(
 }
 
 EASY_DIR*
-EasyCreateDir(
+CreateDir(
     VOID *FileName,
     BOOLEAN IsRoot,
     EASY_DIR *CurDir
     )
 {
+    EASY_STATUS Status;
     EASY_DIR *NewDir;
+    EASY_DIR *DotDir; // ls .
     EASY_DIR *DotDotDir; // cd ..
 
     if (!IsRoot && EasyDirCheckFileExist(CurDir, FileName)) {
@@ -238,24 +247,44 @@ EasyCreateDir(
         return NULL;
     }
 
+    DotDir = CreateDirInternal(".");
+    if (!DotDir) {
+        return NULL;
+    }
+
     DotDotDir = CreateDirInternal("..");
     if (!DotDotDir) {
-        printf("%s: Create DotDotDir Failed\n", __func__);
+        return NULL;
+    }
+
+    Status = EasyDirAddFile(DotDir, EasyDirToEasyFile(NewDir)->Id);
+    if (Status != EASY_SUCCESS) {
         return NULL;
     }
 
     if (IsRoot) {
-        /** RootDir: .. -> RootDir itself */
+        /** RootDir: ".." -> RootDir(NewDir) itself */
         EasyDirAddFile(DotDotDir, EasyDirToEasyFile(NewDir)->Id);
     } else {
+        /** Common Dir . */
         EasyDirAddFile(DotDotDir, EasyDirToEasyFile(CurDir)->Id);
     }
 
-    /** Add .. to newly created directory */
-    EasyDirAddFile(NewDir, EasyDirToEasyFile(DotDotDir)->Id);
+    /** Add . and .. to newly created directory */
+    Status = EasyDirAddFile(NewDir, EasyDirToEasyFile(DotDir)->Id);
+    if (Status != EASY_SUCCESS) {
+        return NULL;
+    }
+    Status = EasyDirAddFile(NewDir, EasyDirToEasyFile(DotDotDir)->Id);
+    if (Status != EASY_SUCCESS) {
+        return NULL;
+    }
 
-    if (!IsRoot && !CurDir) {
-        EasyDirAddFile(CurDir, NewDir->SelfFile->Id);
+    if (!IsRoot && CurDir) {
+        Status = EasyDirAddFile(CurDir, NewDir->SelfFile->Id);
+        if (Status != EASY_SUCCESS) {
+            return NULL;
+        }
     }
 
     return NewDir;
@@ -266,7 +295,7 @@ EasyCreateRootDir(
     VOID
     )
 {
-    RootDir = EasyCreateDir("/", 1, NULL);
+    RootDir = CreateDir("/", 1, NULL);
     if (!RootDir) {
         return -EASY_DIR_CREATE_ROOT_DIR_FAILED;
     }
@@ -275,32 +304,41 @@ EasyCreateRootDir(
     return EASY_SUCCESS;
 }
 
-EASY_STATUS
-EasyDirListFiles(
-    VOID *DirName,
-    VOID *buf
-    )
-{
-    EASY_DIR *Dir;
-    // TODO
-    return EASY_SUCCESS;
-}
-
-EASY_STATUS
-EasyChangeDir(
+EASY_DIR*
+EasyCreateDir(
     VOID *DirName
     )
 {
-    EASY_DIR *Dir;
-    EASY_DIR *CurDir;
+    EASY_DIR *CurDir = GetCurDir();
 
-    CurDir = GetCurDir();
+    return CreateDir(DirName, 0, CurDir);
+}
+
+EASY_STATUS
+EasyDirListFiles(
+    VOID *DirName,
+    VOID *Buf
+    )
+{
+    EASY_DIR *Dir;
+    EASY_DIR *CurDir = GetCurDir();
+    EASY_FILE *File;
+    CHAR8 *BufPtr;
+    UINTN FileLen;
+    UINTN i;
+
     Dir = GetEasyDirByName(DirName, CurDir);
-    if (!Dir) {
-        printf("%s: get dir failed\n", __func__);
-        return -EASY_DIR_NOT_FOUND_ERROR;
+
+    BufPtr = Buf;
+    for (i = 0; i < Dir->FileNum; ++i) {
+        File = FilePoolGetFileById(Dir->FileIds[i]);
+        FileLen = GetFileNameLen(File->Name);
+        CopyMem(BufPtr, File->Name, sizeof(CHAR8) * FileLen);
+        BufPtr += FileLen;
+        /** Add space ' ' to separate file names */
+        *BufPtr = ' ';
+        BufPtr++;
     }
-    SetCurDir(Dir);
 
     return EASY_SUCCESS;
 }
@@ -375,7 +413,7 @@ CreateFileInternal(
     EASY_FILE *NewFile = NULL;
     UINTN NewBlockId;
 
-    NewFile = FilePoolGetFile(FileName, Type);
+    NewFile = FilePoolGetNewFile(FileName, Type);
     if (!NewFile) {
         return NULL;
     }
@@ -395,9 +433,7 @@ EasyCreateFile(
     VOID *FileName
     )
 {
-    EASY_STATUS Status;
     EASY_FILE *NewFile = NULL;
-    UINTN NewBlockId;
     EASY_DIR *CurDir;
 
     CurDir = GetCurDir();
@@ -553,5 +589,91 @@ EasyPwd(
     VOID *buf
     )
 {
+    EASY_DIR *CurDir = GetCurDir();
+    EASY_FILE *CurDirFile = EasyDirToEasyFile(CurDir);
+    UINTN FileNameLen;
+
+    FileNameLen = GetFileNameLen(CurDirFile->Name);
+
+    CopyMem(buf, CurDirFile->Name, sizeof(CHAR8) * FileNameLen);
+
+    return EASY_SUCCESS;
+}
+
+EASY_STATUS
+EasyCd(
+    VOID *DirName
+    )
+{
+    EASY_DIR *Dir;
+    EASY_DIR *CurDir;
+    EASY_FILE *File;
+
+    CurDir = GetCurDir();
+    if (CompareFileName(DirName, ".")) {
+        return EASY_SUCCESS;
+    }
+
+    Dir = GetEasyDirByName(DirName, CurDir);
+    if (!Dir) {
+        printf("%s: get dir failed\n", __func__);
+        return -EASY_DIR_NOT_FOUND_ERROR;
+    }
+    if (CompareFileName(DirName, "..")) {
+        File = FilePoolGetFileById(Dir->FileIds[0]);
+        SetCurDir(EasyFileToEasyDir(File));
+    } else {
+        SetCurDir(Dir);
+    }
+
+    return EASY_SUCCESS;
+}
+
+EASY_STATUS
+EasyCat(
+    VOID *FileName,
+    VOID *Buf
+    )
+{
+    EASY_DIR *CurDir;
+    EASY_FILE *File;
+
+    CurDir = GetCurDir();
+
+    File = EasyDirGetFile(CurDir, FileName);
+    if (!File) {
+        return -EASY_FILE_NOT_FOUND_ERROR;
+    }
+
+    ReadBlock(File->BlockIds[0], File->FileSize, Buf);
+
+    return EASY_SUCCESS;
+}
+
+EASY_STATUS
+EasyLs(
+    VOID *Buf
+    )
+{
+    EASY_DIR *Dir;
+    EASY_DIR *CurDir = GetCurDir();
+    EASY_FILE *File;
+    CHAR8 *BufPtr;
+    UINTN FileLen;
+    UINTN i;
+
+    Dir = CurDir;
+
+    BufPtr = Buf;
+    for (i = 0; i < Dir->FileNum; ++i) {
+        File = FilePoolGetFileById(Dir->FileIds[i]);
+        FileLen = GetFileNameLen(File->Name);
+        CopyMem(BufPtr, File->Name, sizeof(CHAR8) * FileLen);
+        BufPtr += FileLen;
+        /** Add space ' ' to separate file names */
+        *BufPtr = ' ';
+        BufPtr++;
+    }
+
     return EASY_SUCCESS;
 }
