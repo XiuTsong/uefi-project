@@ -849,6 +849,8 @@ SYSCALL_DEFINE0(edk_runtime_sample) {
 SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
                 const char __user **, args) {
   char *comm;
+  char **kargs;
+  int i;
   pr_info("Hello new system call!\n");
   // get args
   comm = kmalloc(MY_CMD_MAX, GFP_KERNEL);
@@ -867,11 +869,9 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
   }
   pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
   if (num > 0) {
-    char **kargs;
-    int i;
 
-    kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
-    memset(kargs, 0, num * sizeof(char *));
+    kargs = kmalloc(MY_ARG_MAX * sizeof(char *), GFP_KERNEL);
+    memset(kargs, 0, MY_ARG_MAX * sizeof(char *));
 
     if (kargs == NULL) {
       pr_info("Memory allocation failed for kargs\n");
@@ -906,7 +906,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
       pr_info("test_efi para %d: %s.\n", i, kargs[i]);
     }
   }
-
+  i = 0;
   // add service here
   if (!strncmp(comm, "time_key", 10)) {
     efi_status_t status;
@@ -930,13 +930,13 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     }
   }
 
-  if (!strncmp(comm, "create", 10) || !strncmp(comm, "read", 10) 
-      || !strncmp(comm, "write", 10) || !strncmp(comm, "remove", 10)
-      || !strncmp(comm, "start", 10)) {
+  if (!strncmp(comm, "create", 10) || !strncmp(comm, "read", 10) ||
+      !strncmp(comm, "write", 10) || !strncmp(comm, "remove", 10) ||
+      !strncmp(comm, "start", 10)) {
 
     efi_status_t status;
-    char **kargs = NULL;
-    int i;
+    // char **kargs = NULL;
+    // int i;
     pr_info("sample_runtime_service begin.\n");
 
     // analyze **args** params
@@ -951,64 +951,72 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     //   return 0;
     // }
 
-    if (!strncmp(comm, "read", 10)) {
-      // assign alternal read buffer
-      kargs = kmalloc((num + 1) * sizeof(char *), GFP_KERNEL);
-      memset(kargs, 0, (num + 1) * sizeof(char *));
-      kargs[num] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
-      memset(kargs[num], 0, MY_STRING_MAX);
-      pr_info("test_efi buffer para %d: %s.\n", num, kargs[num]);
-    } else {
-      kargs = kmalloc(num * sizeof(char *), GFP_KERNEL);
-      memset(kargs, 0, num * sizeof(char *));
-    }
-    if (kargs == NULL) {
-      pr_info("Memory allocation failed for kargs\n");
-      kfree(comm);    // Free allocated memory before returning
-      return -ENOMEM; // Return appropriate error code
-    }
+    // if (!strncmp(comm, "read", 10)) {
+    //   // assign alternal read buffer
+    //   kargs = kmalloc(MY_ARG_MAX * sizeof(char *), GFP_KERNEL);
+    //   memset(kargs, 0, MY_ARG_MAX * sizeof(char *));
+    //   kargs[num] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
+    //   memset(kargs[num], 0, MY_STRING_MAX);
+    //   pr_info("test_efi buffer para %d: %s.\n", num, kargs[num]);
+    // } else {
+    //   kargs = kmalloc(MY_ARG_MAX * sizeof(char *), GFP_KERNEL);
+    //   memset(kargs, 0, MY_ARG_MAX * sizeof(char *));
+    // }
+    // if (kargs == NULL) {
+    //   pr_info("Memory allocation failed for kargs\n");
+    //   kfree(comm);    // Free allocated memory before returning
+    //   return -ENOMEM; // Return appropriate error code
+    // }
 
-    // copy_from_user(kargs, (void *)args, num * sizeof(char *));
-    for (i = 0; i < num; i++) {
-      kargs[i] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
-      memset(kargs[i], 0, MY_STRING_MAX);
-      if (kargs[i] == NULL) {
-        pr_info("Memory allocation failed for kargs[%d]\n", i);
-        // Free previously allocated memory before returning
-        while (i > 0) {
-          kfree(kargs[--i]);
-        }
-        kfree(kargs);
-        kfree(comm);
-        return -ENOMEM; // Return appropriate error code
-      }
-      if (copy_from_user(kargs[i], args[i], MY_STRING_MAX) != 0) {
-        pr_info("copy_from_user failed for kargs[%d]\n", i);
-        // Free previously allocated memory before returning
-        while (i >= 0) {
-          kfree(kargs[i--]);
-        }
-        kfree(kargs);
-        kfree(comm);
-        return -EFAULT; // Return appropriate error code
-      }
-      pr_info("test_efi para %d: %s.\n", i, kargs[i]);
-    }
+    // // copy_from_user(kargs, (void *)args, num * sizeof(char *));
+    // for (i = 0; i < num; i++) {
+    //   kargs[i] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
+    //   memset(kargs[i], 0, MY_STRING_MAX);
+    //   if (kargs[i] == NULL) {
+    //     pr_info("Memory allocation failed for kargs[%d]\n", i);
+    //     // Free previously allocated memory before returning
+    //     while (i > 0) {
+    //       kfree(kargs[--i]);
+    //     }
+    //     kfree(kargs);
+    //     kfree(comm);
+    //     return -ENOMEM; // Return appropriate error code
+    //   }
+    //   if (copy_from_user(kargs[i], args[i], MY_STRING_MAX) != 0) {
+    //     pr_info("copy_from_user failed for kargs[%d]\n", i);
+    //     // Free previously allocated memory before returning
+    //     while (i >= 0) {
+    //       kfree(kargs[i--]);
+    //     }
+    //     kfree(kargs);
+    //     kfree(comm);
+    //     return -EFAULT; // Return appropriate error code
+    //   }
+    //   pr_info("test_efi para %d: %s.\n", i, kargs[i]);
+    // }
 
     // **kargs** params
     // comm       params
     // create     char* name
     // read       char* name, int byte_size, char* buffer
-    // write      char* name, char* content, int byte_size
+    // write      char* name, char* content
     // remove     char* name
+    // start
+    // ls
+    // pwd
+    // cd         char* name
+    // mkdir      char* name
+    // cat        char* name，char* buffer （无size的read，read all）
+    // echo       char* content char* name（和write一样，交换一下参数位置）
+    // torch      char* name（同create）
     status = efi.sample_runtime_service(comm, num, kargs);
     if (status != EFI_SUCCESS) {
       pr_info("sample_time_service failed, status %lx\n", status);
       pr_info("EFI_INVALID_PARAMETER: %lx orr: %lx\n", EFI_INVALID_PARAMETER,
-            (1UL << (BITS_PER_LONG - 1)));
+              (1UL << (BITS_PER_LONG - 1)));
       return status;
     } else {
-      if (!strncmp(comm, "create", 10)) {
+      if (!strncmp(comm, "create", 10) || !strncmp(comm, "torch", 10)) {
         pr_info("create sucess! file: %s\n", kargs[0]);
       } else if (!strncmp(comm, "read", 10)) {
         pr_info("read sucess! file: %s, byte: %s\n", kargs[0], kargs[1]);
