@@ -148,7 +148,8 @@ void dir_test_1()
     return;
   }
 
-  EasyDirListFiles("/", buf);
+  // EasyDirListFiles("/", buf);
+  EasyLs(buf);
   printf("files: %s\n", buf);
   memset(buf, 0, 100);
   EasyPwd(buf);
@@ -157,7 +158,8 @@ void dir_test_1()
 
   EasyCreateDir("dir1");
 
-  EasyDirListFiles("/", buf);
+  // EasyDirListFiles("/", buf);
+  EasyLs(buf);
   printf("files: %s\n", buf);
   memset(buf, 0, 100);
 
@@ -193,11 +195,11 @@ main (
 
   init_file_system();
 
-  file_test_1();
+  // file_test_1();
 
   // file_test_2();
 
-  // dir_test_1();
+  dir_test_1();
 
   return EFI_SUCCESS;
 }

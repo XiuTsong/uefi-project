@@ -851,7 +851,7 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
   char *comm;
   char **kargs;
   int i;
-  pr_info("Hello new system call!\n");
+  // pr_info("Hello new system call!\n");
   // get args
   comm = kmalloc(MY_CMD_MAX, GFP_KERNEL);
   memset(comm, 0, MY_CMD_MAX);
@@ -861,14 +861,14 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
     return -ENOMEM; // Return appropriate error code
   }
 
-  pr_info("cmd: %p\n", cmd);
+  // pr_info("cmd: %p\n", cmd);
   if (copy_from_user(comm, cmd, MY_CMD_MAX) != 0) {
     pr_info("copy_from_user failed for comm\n");
     kfree(comm);    // Free allocated memory before returning
     return -EFAULT; // Return appropriate error code
   }
-  pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
-  if (num > 0) {
+  // pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
+  if (num >= 0) {
 
     kargs = kmalloc(MY_ARG_MAX * sizeof(char *), GFP_KERNEL);
     memset(kargs, 0, MY_ARG_MAX * sizeof(char *));
@@ -903,7 +903,7 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
         kfree(comm);
         return -EFAULT; // Return appropriate error code
       }
-      pr_info("test_efi para %d: %s.\n", i, kargs[i]);
+      // pr_info("test_efi para %d: %s.\n", i, kargs[i]);
     }
   }
   i = 0;
@@ -912,7 +912,7 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
     efi_status_t status;
     efi_time_t system_time;
     efi_time_cap_t time_cap;
-    pr_info("test_efi begin.\n");
+    // pr_info("test_efi begin.\n");
 
     status = efi.get_time(&system_time, &time_cap);
 
@@ -939,7 +939,7 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
     efi_status_t status;
     // char **kargs = NULL;
     // int i;
-    pr_info("sample_runtime_service begin.\n");
+    // pr_info("sample_runtime_service begin.\n");
 
     // analyze **args** params
     // comm       params
@@ -947,7 +947,7 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
     // read       char* name, int byte_size
     // write      char* name, char* content, int byte_size
     // remove     char* name
-    pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
+    // pr_info("test_efi begin num %d ,comm %s.\n", num, comm);
     // if (num <= 0) {
     //   pr_info("ERR: params absent.");
     //   return 0;
@@ -1013,7 +1013,7 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
     //   sprintf(kargs[1], "%d", strlen(kargs[0]));
     // }
     if (!strncmp(comm, "write", 10)) {
-      sprintf(kargs[2], "%d", strlen(kargs[1]));
+      sprintf(kargs[2], "%ld", strlen(kargs[1]));
     }
     status = efi.sample_runtime_service(comm, num, kargs);
     if (status != EFI_SUCCESS) {
@@ -1023,30 +1023,30 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
       return status;
     } else {
       if (!strncmp(comm, "create", 10)) {
-        pr_info("create sucess! file: %s\n", kargs[0]);
+        // pr_info("create sucess! file: %s\n", kargs[0]);
       } else if (!strncmp(comm, "read", 10)) {
-        pr_info("read sucess! file: %s, byte: %s\n", kargs[0], kargs[1]);
-        pr_info("%s\n", kargs[2]);
+        // pr_info("read sucess! file: %s, byte: %s\n", kargs[0], kargs[1]);
+        // pr_info("%s\n", kargs[2]);
         copy_to_user(buffer, kargs[2], MY_STRING_MAX);
       } else if (!strncmp(comm, "ls", 10)) {
-        pr_info("ls:%s\n", kargs[0]);
+        // pr_info("ls:%s\n", kargs[0]);
         copy_to_user(buffer, kargs[0], MY_STRING_MAX);
       } else if (!strncmp(comm, "pwd", 10)) {
-        pr_info("pwd:%s\n", kargs[0]);
+        // pr_info("pwd:%s\n", kargs[0]);
         copy_to_user(buffer, kargs[0], MY_STRING_MAX);
       } else if (!strncmp(comm, "cat", 10)) {
-        pr_info("cat:%s:%s\n", kargs[0], kargs[1]);
+        // pr_info("cat:%s:%s\n", kargs[0], kargs[1]);
         copy_to_user(buffer, kargs[1], MY_STRING_MAX);
       } else if (!strncmp(comm, "write", 10)) {
-        pr_info("write sucess! file: %s, byte: %s\n", kargs[0], kargs[2]);
+        // pr_info("write sucess! file: %s, byte: %s\n", kargs[0], kargs[2]);
       } else if (!strncmp(comm, "remove", 10)) {
-        pr_info("remove sucess! file: %s\n", kargs[0]);
+        // pr_info("remove sucess! file: %s\n", kargs[0]);
       } else if (!strncmp(comm, "start", 10)) {
-        pr_info("filesystem start!\n");
+        // pr_info("filesystem start!\n");
       } else if (!strncmp(comm, "mkdir", 10)) {
-        pr_info("mkdir:%s!\n", kargs[0]);
+        // pr_info("mkdir:%s!\n", kargs[0]);
       } else if (!strncmp(comm, "cd", 10)) {
-        pr_info("cd:%s!\n", kargs[0]);
+        // pr_info("cd:%s!\n", kargs[0]);
       } else {
         pr_info("ERR: Unknown Command! comm: %s\n", comm);
       }

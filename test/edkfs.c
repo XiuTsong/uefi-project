@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
         args[num] = malloc(STRING_MAX);
         memset(args[num], 0, STRING_MAX);
         strcpy(args[num], token);
-        printf("args[%d]:%s\n", num, args[num]);
+        // printf("args[%d]:%s\n", num, args[num]);
         num++;
       }
     }
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
       args[0] = args[1];
       args[1] = temp;
     }
-    if (!strcmp(cmd, "torch")) {
+    if (!strcmp(cmd, "touch")) {
       strcpy(cmd, "create");
     }
     if (!strcmp(cmd, "create") || !strcmp(cmd, "remove") ||
@@ -75,19 +75,19 @@ int main(int argc, char *argv[]) {
       // for (int i = 0; i < num; i++) {
       //   printf("args[%d]:%s\n", i, args[i]);
       // }
-      printf("syscall EFI with cmd: %s,args num: %d\n", cmd, num);
+      // printf("syscall EFI with cmd: %s,args num: %d\n", cmd, num);
       syscall(EFI, cmd, num, args, buffer);
       if (!strcmp(cmd, "read")) {
-        printf("read:%s\n", buffer);
+        printf("%s\n", buffer);
       }
       if (!strcmp(cmd, "ls")) {
-        printf("ls:%s\n", buffer);
+        printf("%s\n", buffer);
       }
       if (!strcmp(cmd, "cat")) {
-        printf("cat:%s\n", buffer);
+        printf("%s\n", buffer);
       }
       if (!strcmp(cmd, "pwd")) {
-        printf("pwd:%s\n", buffer);
+        printf("%s\n", buffer);
       }
       // printf("num: %d\n", num);
     } else {
