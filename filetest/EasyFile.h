@@ -78,4 +78,15 @@ EASY_STATUS
 EasyCd(
     VOID *DirName
     );
+
+EASY_STATUS
+EasyCat(
+    VOID *FileName,
+    VOID *Buf
+    );
+
+EASY_STATUS
+EasyLs(
+    VOID *Buf
+    );
 #endif

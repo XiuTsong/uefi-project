@@ -262,13 +262,12 @@ CreateDir(
         return NULL;
     }
 
-    DotDir->SelfFile = NewDir->SelfFile;
     if (IsRoot) {
         /** RootDir: ".." -> RootDir(NewDir) itself */
-        DotDotDir->SelfFile = NewDir->SelfFile;
+        EasyDirAddFile(DotDotDir, EasyDirToEasyFile(NewDir)->Id);
     } else {
         /** Common Dir . */
-        DotDotDir->SelfFile = CurDir->SelfFile;
+        EasyDirAddFile(DotDotDir, EasyDirToEasyFile(CurDir)->Id);
     }
 
     /** Add . and .. to newly created directory */
@@ -608,6 +607,7 @@ EasyCd(
 {
     EASY_DIR *Dir;
     EASY_DIR *CurDir;
+    EASY_FILE *File;
 
     CurDir = GetCurDir();
     if (CompareFileName(DirName, ".")) {
@@ -620,9 +620,59 @@ EasyCd(
         return -EASY_DIR_NOT_FOUND_ERROR;
     }
     if (CompareFileName(DirName, "..")) {
-        SetCurDir(EasyFileToEasyDir(Dir->SelfFile));
+        File = FilePoolGetFileById(Dir->FileIds[0]);
+        SetCurDir(EasyFileToEasyDir(File));
     } else {
         SetCurDir(Dir);
+    }
+
+    return EASY_SUCCESS;
+}
+
+EASY_STATUS
+EasyCat(
+    VOID *FileName,
+    VOID *Buf
+    )
+{
+    EASY_DIR *CurDir;
+    EASY_FILE *File;
+
+    CurDir = GetCurDir();
+
+    File = EasyDirGetFile(CurDir, FileName);
+    if (!File) {
+        return -EASY_FILE_NOT_FOUND_ERROR;
+    }
+
+    ReadBlock(File->BlockIds[0], File->FileSize, Buf);
+
+    return EASY_SUCCESS;
+}
+
+EASY_STATUS
+EasyLs(
+    VOID *Buf
+    )
+{
+    EASY_DIR *Dir;
+    EASY_DIR *CurDir = GetCurDir();
+    EASY_FILE *File;
+    CHAR8 *BufPtr;
+    UINTN FileLen;
+    UINTN i;
+
+    Dir = CurDir;
+
+    BufPtr = Buf;
+    for (i = 0; i < Dir->FileNum; ++i) {
+        File = FilePoolGetFileById(Dir->FileIds[i]);
+        FileLen = GetFileNameLen(File->Name);
+        CopyMem(BufPtr, File->Name, sizeof(CHAR8) * FileLen);
+        BufPtr += FileLen;
+        /** Add space ' ' to separate file names */
+        *BufPtr = ' ';
+        BufPtr++;
     }
 
     return EASY_SUCCESS;

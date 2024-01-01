@@ -78,7 +78,14 @@ void file_test_1(VOID)
     return;
   }
 
-  Status = EasyReadFile("def.txt", 3, buf);
+  // Status = EasyReadFile("def.txt", 3, buf);
+  // if (Status != EASY_SUCCESS) {
+  //   printf("Write File failed\n");
+  //   return;
+  // }
+  memset(buf, 0, 10);
+
+  Status = EasyCat("def.txt", buf);
   if (Status != EASY_SUCCESS) {
     printf("Write File failed\n");
     return;
@@ -186,11 +193,11 @@ main (
 
   init_file_system();
 
-  // file_test_1();
+  file_test_1();
 
   // file_test_2();
 
-  dir_test_1();
+  // dir_test_1();
 
   return EFI_SUCCESS;
 }
