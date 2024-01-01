@@ -19,6 +19,7 @@ EDK2_BIN		?= $(EDK2_BUILD)/FV/OVMF.fd
 LINUX_PATH      ?= $(ROOT)/linux
 LINUX_IMAGE     ?= $(LINUX_PATH)/arch/x86_64/boot/bzImage
 BUSYBOX_PATH    ?= $(ROOT)/busybox/_install
+EDKFS_PATH      ?= $(ROOT)/test
 
 linux:
 	make -C $(LINUX_PATH) -j16 
@@ -38,9 +39,14 @@ edk2-clean:
 	build clean
 
 initramfs:
+	# cd $(EDKFS_PATH) && \
+	# gcc -static edkfs.c -o edkfs && \
+	# cp edkfs $(BUSYBOX_PATH) \
 	cd $(BUSYBOX_PATH) && \
 	find . -print0 | cpio --null -ov --format=newc | gzip -9 > $(CURDIR)/initramfs-busybox-x64.cpio.gz
 
+fs:
+	gcc -static $(EDKFS_PATH)/edkfs.c -o $(BUSYBOX_PATH)/edkfs
 
 ################################################################################
 # Qemu run

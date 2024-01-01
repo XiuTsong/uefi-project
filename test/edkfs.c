@@ -78,13 +78,15 @@ int main(int argc, char *argv[]) {
       // printf("syscall EFI with cmd: %s,args num: %d\n", cmd, num);
       syscall(EFI, cmd, num, args, buffer);
       if (!strcmp(cmd, "read")) {
-        printf("%s\n", buffer);
+        if (strlen(buffer) != 0)
+          printf("%s\n", buffer);
       }
       if (!strcmp(cmd, "ls")) {
         printf("%s\n", buffer);
       }
       if (!strcmp(cmd, "cat")) {
-        printf("%s\n", buffer);
+        if (strlen(buffer) != 0)
+          printf("%s\n", buffer);
       }
       if (!strcmp(cmd, "pwd")) {
         printf("%s\n", buffer);
