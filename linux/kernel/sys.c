@@ -846,8 +846,8 @@ SYSCALL_DEFINE0(edk_runtime_sample) {
 #define MY_CMD_MAX 20
 #define MY_ARG_MAX 10
 
-SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
-                const char __user **, args) {
+SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
+                const char __user **, args, char __user *, buffer) {
   char *comm;
   char **kargs;
   int i;
@@ -862,7 +862,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
   }
 
   pr_info("cmd: %p\n", cmd);
-  if (copy_from_user(comm, cmd, 10) != 0) {
+  if (copy_from_user(comm, cmd, MY_CMD_MAX) != 0) {
     pr_info("copy_from_user failed for comm\n");
     kfree(comm);    // Free allocated memory before returning
     return -EFAULT; // Return appropriate error code
@@ -880,7 +880,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     }
 
     // copy_from_user(kargs, (void *)args, num * sizeof(char *));
-    for (i = 0; i < num; i++) {
+    for (i = 0; i < MY_ARG_MAX; i++) {
       kargs[i] = kmalloc(MY_STRING_MAX, GFP_KERNEL);
       memset(kargs[i], 0, MY_STRING_MAX);
       if (kargs[i] == NULL) {
@@ -893,7 +893,7 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
         kfree(comm);
         return -ENOMEM; // Return appropriate error code
       }
-      if (copy_from_user(kargs[i], args[i], MY_STRING_MAX) != 0) {
+      if (i < num && (copy_from_user(kargs[i], args[i], MY_STRING_MAX) != 0)) {
         pr_info("copy_from_user failed for kargs[%d]\n", i);
         // Free previously allocated memory before returning
         while (i >= 0) {
@@ -932,7 +932,9 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
 
   if (!strncmp(comm, "create", 10) || !strncmp(comm, "read", 10) ||
       !strncmp(comm, "write", 10) || !strncmp(comm, "remove", 10) ||
-      !strncmp(comm, "start", 10)) {
+      !strncmp(comm, "start", 10) || !strncmp(comm, "ls", 10) ||
+      !strncmp(comm, "mkdir", 10) || !strncmp(comm, "pwd", 10) ||
+      !strncmp(comm, "cat", 10) || !strncmp(comm, "cd", 10)) {
 
     efi_status_t status;
     // char **kargs = NULL;
@@ -1002,13 +1004,17 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
     // write      char* name, char* content
     // remove     char* name
     // start
-    // ls
-    // pwd
+    // ls         char* buffer
+    // pwd        char* buffer
     // cd         char* name
     // mkdir      char* name
     // cat        char* name，char* buffer （无size的read，read all）
-    // echo       char* content char* name（和write一样，交换一下参数位置）
-    // torch      char* name（同create）
+    // if (!strncmp(comm, "read", 10)) {
+    //   sprintf(kargs[1], "%d", strlen(kargs[0]));
+    // }
+    if (!strncmp(comm, "write", 10)) {
+      sprintf(kargs[2], "%d", strlen(kargs[1]));
+    }
     status = efi.sample_runtime_service(comm, num, kargs);
     if (status != EFI_SUCCESS) {
       pr_info("sample_time_service failed, status %lx\n", status);
@@ -1016,17 +1022,31 @@ SYSCALL_DEFINE3(edk_runtime, const char __user *, cmd, int, num,
               (1UL << (BITS_PER_LONG - 1)));
       return status;
     } else {
-      if (!strncmp(comm, "create", 10) || !strncmp(comm, "torch", 10)) {
+      if (!strncmp(comm, "create", 10)) {
         pr_info("create sucess! file: %s\n", kargs[0]);
       } else if (!strncmp(comm, "read", 10)) {
         pr_info("read sucess! file: %s, byte: %s\n", kargs[0], kargs[1]);
         pr_info("%s\n", kargs[2]);
+        copy_to_user(buffer, kargs[2], MY_STRING_MAX);
+      } else if (!strncmp(comm, "ls", 10)) {
+        pr_info("ls:%s\n", kargs[0]);
+        copy_to_user(buffer, kargs[0], MY_STRING_MAX);
+      } else if (!strncmp(comm, "pwd", 10)) {
+        pr_info("pwd:%s\n", kargs[0]);
+        copy_to_user(buffer, kargs[0], MY_STRING_MAX);
+      } else if (!strncmp(comm, "cat", 10)) {
+        pr_info("cat:%s:%s\n", kargs[0], kargs[1]);
+        copy_to_user(buffer, kargs[1], MY_STRING_MAX);
       } else if (!strncmp(comm, "write", 10)) {
         pr_info("write sucess! file: %s, byte: %s\n", kargs[0], kargs[2]);
       } else if (!strncmp(comm, "remove", 10)) {
         pr_info("remove sucess! file: %s\n", kargs[0]);
       } else if (!strncmp(comm, "start", 10)) {
         pr_info("filesystem start!\n");
+      } else if (!strncmp(comm, "mkdir", 10)) {
+        pr_info("mkdir:%s!\n", kargs[0]);
+      } else if (!strncmp(comm, "cd", 10)) {
+        pr_info("cd:%s!\n", kargs[0]);
       } else {
         pr_info("ERR: Unknown Command! comm: %s\n", comm);
       }

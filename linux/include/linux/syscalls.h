@@ -895,7 +895,7 @@ asmlinkage long sys_pkey_alloc(unsigned long flags, unsigned long init_val);
 asmlinkage long sys_pkey_free(int pkey);
 asmlinkage long sys_edk_runtime_sample(void);
 asmlinkage long sys_edk_runtime(const char __user *cmd, int num,
-                                const char __user **args);
+                                const char __user **args,char __user* buffer);
 // asmlinkage long sys_edk_runtime(const char __user *cmd, int num1);
 
 #endif
