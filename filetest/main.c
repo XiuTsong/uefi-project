@@ -149,39 +149,40 @@ void dir_test_1()
   }
 
   // EasyDirListFiles("/", buf);
-  EasyLs(buf);
-  printf("files: %s\n", buf);
-  memset(buf, 0, 100);
-  EasyPwd(buf);
-  printf("CurDir: %s\n", buf);
-  memset(buf, 0, 100);
+  // EasyLs(buf);
+  // printf("files: %s\n", buf);
+  // memset(buf, 0, 100);
+  // EasyPwd(buf);
+  // printf("CurDir: %s\n", buf);
+  // memset(buf, 0, 100);
 
   EasyCreateDir("dir1");
 
-  // EasyDirListFiles("/", buf);
-  EasyLs(buf);
-  printf("files: %s\n", buf);
-  memset(buf, 0, 100);
+  // EasyDirListFiles("dir1", buf);
+  // EasyLs(buf);
+  // printf("files: %s\n", buf);
+  // memset(buf, 0, 100);
 
   EasyCd("dir1");
-  EasyPwd(buf);
-  printf("CurDir: %s\n", buf);
-  memset(buf, 0, 100);
+  // EasyPwd(buf);
+  EasyDirListFiles("..", buf);
+  printf("ParentDir: %s\n", buf);
+  // memset(buf, 0, 100);
 
-  EasyCd(".");
-  EasyPwd(buf);
-  printf("CurDir: %s\n", buf);
-  memset(buf, 0, 100);
+  // EasyCd(".");
+  // EasyPwd(buf);
+  // printf("CurDir: %s\n", buf);
+  // memset(buf, 0, 100);
 
-  EasyCd("..");
-  EasyPwd(buf);
-  printf("CurDir: %s\n", buf);
-  memset(buf, 0, 100);
+  // EasyCd("..");
+  // EasyPwd(buf);
+  // printf("CurDir: %s\n", buf);
+  // memset(buf, 0, 100);
 
-  EasyCd("..");
-  EasyPwd(buf);
-  printf("CurDir: %s\n", buf);
-  memset(buf, 0, 100);
+  // EasyCd("..");
+  // EasyPwd(buf);
+  // printf("CurDir: %s\n", buf);
+  // memset(buf, 0, 100);
 }
 
 int

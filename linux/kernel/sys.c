@@ -1030,7 +1030,10 @@ SYSCALL_DEFINE4(edk_runtime, const char __user *, cmd, int, num,
         copy_to_user(buffer, kargs[2], MY_STRING_MAX);
       } else if (!strncmp(comm, "ls", 10)) {
         // pr_info("ls:%s\n", kargs[0]);
-        copy_to_user(buffer, kargs[0], MY_STRING_MAX);
+        if (num == 0)
+          copy_to_user(buffer, kargs[0], MY_STRING_MAX);
+        else
+          copy_to_user(buffer, kargs[1], MY_STRING_MAX);
       } else if (!strncmp(comm, "pwd", 10)) {
         // pr_info("pwd:%s\n", kargs[0]);
         copy_to_user(buffer, kargs[0], MY_STRING_MAX);

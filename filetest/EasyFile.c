@@ -81,6 +81,28 @@ CompareFileName(
     return 1;
 }
 
+STATIC
+EASY_DIR*
+EasyFileToEasyDir(
+    EASY_FILE* File
+    )
+{
+    if (File->Type != EASY_TYPE_DIR) 
+        return NULL;
+
+    return (EASY_DIR *)GetBlock(File->BlockIds[0]);
+}
+
+STATIC
+EASY_FILE*
+EasyDirToEasyFile(
+    EASY_DIR* Dir
+    )
+{
+    return Dir->SelfFile;
+}
+
+
 /************************************************************
  *        File Pool Related
  ************************************************************/
@@ -139,27 +161,6 @@ EasyInitFilePool(
 #define GetCurDir() (CurrentDir)
 #define SetCurDir(Dir) (CurrentDir = (Dir))
 
-STATIC
-EASY_DIR*
-EasyFileToEasyDir(
-    EASY_FILE* File
-    )
-{
-    if (File->Type != EASY_TYPE_DIR) 
-        return NULL;
-
-    return (EASY_DIR *)GetBlock(File->BlockIds[0]);
-}
-
-STATIC
-EASY_FILE*
-EasyDirToEasyFile(
-    EASY_DIR* Dir
-    )
-{
-    return Dir->SelfFile;
-}
-
 EASY_DIR*
 GetEasyDirByName(
     VOID *DirName,
@@ -182,6 +183,18 @@ GetEasyDirByName(
 
     return Dir;
 }
+
+STATIC
+EASY_DIR*
+GetParentDir(
+    EASY_DIR *Dir
+    )
+{
+    EASY_DIR *DotDotDir;
+    DotDotDir = GetEasyDirByName("..", Dir);
+    return EasyFileToEasyDir(FilePoolGetFileById(DotDotDir->FileIds[0]));
+}
+
 
 BOOLEAN
 EasyDirCheckFileExist(
@@ -327,7 +340,13 @@ EasyDirListFiles(
     UINTN FileLen;
     UINTN i;
 
-    Dir = GetEasyDirByName(DirName, CurDir);
+    if (CompareFileName(DirName, ".")) {
+        Dir = CurDir;
+    } else if (CompareFileName(DirName, "..")) {
+        Dir = GetParentDir(CurDir);
+    } else {
+        Dir = GetEasyDirByName(DirName, CurDir);
+    }
 
     BufPtr = Buf;
     for (i = 0; i < Dir->FileNum; ++i) {
@@ -607,10 +626,15 @@ EasyCd(
 {
     EASY_DIR *Dir;
     EASY_DIR *CurDir;
-    EASY_FILE *File;
+    EASY_DIR *ParentDir;
 
     CurDir = GetCurDir();
     if (CompareFileName(DirName, ".")) {
+        return EASY_SUCCESS;
+    }
+    if (CompareFileName(DirName, "..")) {
+        ParentDir = GetParentDir(CurDir);
+        SetCurDir(ParentDir);
         return EASY_SUCCESS;
     }
 
@@ -619,12 +643,8 @@ EasyCd(
         printf("%s: get dir failed\n", __func__);
         return -EASY_DIR_NOT_FOUND_ERROR;
     }
-    if (CompareFileName(DirName, "..")) {
-        File = FilePoolGetFileById(Dir->FileIds[0]);
-        SetCurDir(EasyFileToEasyDir(File));
-    } else {
-        SetCurDir(Dir);
-    }
+
+    SetCurDir(Dir);
 
     return EASY_SUCCESS;
 }
